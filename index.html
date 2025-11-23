@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Barbearia Premium v11+</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Ícones Phosphor -->
+    <script src="https://unpkg.com/phosphor-icons"></script>
+    <!-- Fontes -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Outfit', 'sans-serif'] },
+                    colors: {
+                        cyber: {
+                            dark: '#050507',
+                            primary: '#00f2ff', 
+                            secondary: '#7000ff',
+                        }
+                    },
+                    animation: {
+                        'gradient': 'gradient 15s ease infinite',
+                    },
+                    keyframes: {
+                        gradient: {
+                            '0%, 100%': { 'background-position': '0% 50%' },
+                            '50%': { 'background-position': '100% 50%' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #050507;
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(112, 0, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 100% 0%, rgba(0, 242, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 50% 100%, rgba(255, 0, 85, 0.1) 0%, transparent 50%);
+            color: #e5e5e5;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .glass-morphism {
+            background: rgba(18, 18, 22, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 50px -10px rgba(0,0,0,0.5);
+        }
+
+        .input-cyber {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.3s;
+        }
+        .input-cyber:focus {
+            border-color: #00f2ff;
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+            outline: none;
+        }
+
+        .btn-neon {
+            background: linear-gradient(90deg, #00f2ff 0%, #0088ff 100%);
+            color: #000;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+        .btn-neon:hover { box-shadow: 0 0 20px rgba(0, 242, 255, 0.4); transform: translateY(-2px); }
+        .btn-neon:active { transform: scale(0.98); }
+
+        .day-checkbox:checked + div {
+            background: #00f2ff; color: black; font-weight: bold;
+            box-shadow: 0 0 10px rgba(0,242,255,0.5);
+        }
+
+        ::-webkit-calendar-picker-indicator { filter: invert(1) opacity(0.6); cursor: pointer; }
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- ESTILO DE IMPRESSÃO (PDF) --- */
+        @media print {
+            body * { visibility: hidden; }
+            #printableArea, #printableArea * { visibility: visible; }
+            #printableArea { 
+                position: absolute; left: 0; top: 0; width: 100%; 
+                background: white; color: black; padding: 20px; 
+                z-index: 9999;
+            }
+            .no-print { display: none !important; }
+            
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            th { background-color: #eee !important; color: #000 !important; border: 1px solid #aaa; padding: 8px; font-size: 12px; }
+            td { border: 1px solid #aaa; padding: 8px; font-size: 12px; color: #000 !important; }
+            
+            .print-cancelled { text-decoration: line-through; color: #999 !important; font-style: italic; }
+            .print-cancelled-tag { font-weight: bold; color: red !important; text-decoration: none; font-size: 10px; margin-left: 5px; }
+            
+            .print-summary-box {
+                display: flex; justify-content: space-between; 
+                border: 1px solid #000; padding: 10px; margin-bottom: 20px;
+            }
+            .print-summary-item { text-align: center; }
+            .print-summary-label { font-size: 10px; text-transform: uppercase; }
+            .print-summary-value { font-size: 16px; font-weight: bold; }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-4">
+
+    <div id="app" class="w-full max-w-md md:max-w-5xl glass-morphism rounded-2xl overflow-hidden fade-in min-h-[700px] flex flex-col relative border-t border-t-white/10">
+        
+        <!-- Topo -->
+        <div class="p-6 border-b border-white/5 flex justify-between items-center bg-black/20 no-print">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <i class="ph-scissors text-black text-xl font-bold"></i>
+                </div>
+                <div>
+                    <h1 id="appTitle" class="font-bold text-xl text-white tracking-wide leading-none">VANGUARDA</h1>
+                    <p class="text-[10px] text-cyan-400 tracking-[0.2em] uppercase">Premium Cuts</p>
+                </div>
+            </div>
+            <button id="btnLogout" onclick="handleLogout()" class="hidden text-xs font-bold text-gray-500 hover:text-white uppercase tracking-wider flex gap-1 items-center transition-colors">
+                Sair <i class="ph-sign-out"></i>
+            </button>
+        </div>
+
+        <!-- 1. LOGIN -->
+        <div id="loginPage" class="p-8 flex flex-col justify-center flex-grow max-w-sm mx-auto w-full relative no-print">
+            <div class="text-center mb-10 relative z-10">
+                <h2 class="text-3xl font-bold text-white mb-1">Bem-vindo</h2>
+                <p class="text-gray-400 text-sm">Faça login para continuar</p>
+            </div>
+
+            <div class="flex bg-black/40 p-1.5 rounded-xl mb-8 border border-white/5 relative z-10">
+                <button id="tabCliente" onclick="setLoginMode('cliente')" class="flex-1 py-2.5 text-xs font-bold uppercase rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-black shadow-lg">Sou Cliente</button>
+                <button id="tabOwner" onclick="setLoginMode('owner')" class="flex-1 py-2.5 text-xs font-bold uppercase rounded-lg text-gray-500 hover:text-white">Proprietário</button>
+            </div>
+
+            <div class="space-y-5 relative z-10">
+                <div>
+                    <label id="lblLoginUser" class="block text-[10px] font-bold text-cyan-400 mb-2 uppercase tracking-widest ml-1">Nome Completo</label>
+                    <input type="text" id="loginUser" class="input-cyber w-full p-3 pl-4 rounded-xl text-sm" placeholder="Ex: Carlos Almeida">
+                </div>
+                <div id="divLoginPass" class="hidden">
+                    <label class="block text-[10px] font-bold text-cyan-400 mb-2 uppercase tracking-widest ml-1">Senha</label>
+                    <input type="password" id="loginPass" class="input-cyber w-full p-3 pl-4 rounded-xl text-sm" placeholder="••••••">
+                    <div class="text-right mt-2">
+                        <button onclick="showForgotPass()" class="text-[10px] text-gray-500 hover:text-cyan-400">Recuperar acesso</button>
+                    </div>
+                </div>
+                <button onclick="handleLogin()" class="btn-neon w-full py-3.5 rounded-xl shadow-lg shadow-cyan-500/20 mt-4 text-sm">
+                    Entrar no Sistema
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. ÁREA DO CLIENTE -->
+        <div id="clientPage" class="hidden flex-grow flex flex-col md:flex-row h-full no-print">
+            <div class="p-6 md:p-8 md:w-2/3 space-y-8 overflow-y-auto">
+                <div>
+                    <h2 class="text-2xl font-bold text-white mb-1">Agendar Horário</h2>
+                    <p class="text-sm text-gray-400">Olá, <span id="clientNameDisplay" class="text-cyan-400 font-bold">Cliente</span>.</p>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider ml-1">Serviço</label>
+                        <select id="inputService" class="input-cyber w-full p-4 rounded-xl appearance-none cursor-pointer text-sm border-l-4 border-l-cyan-500"></select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider ml-1">Data</label>
+                        <input type="date" id="inputDate" onchange="renderTimeSlots()" class="input-cyber w-full p-4 rounded-xl text-sm cursor-pointer border-l-4 border-l-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider ml-1">Disponibilidade</label>
+                        <div id="slotsContainer" class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                            <p class="text-gray-600 text-xs col-span-full py-8 text-center border border-dashed border-white/10 rounded-xl bg-black/20">
+                                Selecione uma data para ver os horários.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="confirmBooking()" class="btn-neon w-full py-4 rounded-xl shadow-lg shadow-cyan-500/20 flex justify-center items-center gap-2 text-sm">
+                    CONFIRMAR AGENDAMENTO <i class="ph-check-circle text-lg"></i>
+                </button>
+            </div>
+
+            <div class="bg-black/20 border-t md:border-t-0 md:border-l border-white/5 p-6 md:w-1/3 flex flex-col">
+                <div class="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Meus Agendamentos</h3>
+                    <span class="bg-cyan-500/10 text-cyan-400 text-[10px] px-2 py-1 rounded font-bold" id="myCount">0</span>
+                </div>
+                <div id="clientMyAppointments" class="space-y-3 overflow-y-auto max-h-[400px] flex-grow pr-2"></div>
+            </div>
+        </div>
+
+        <!-- 3. ÁREA DO PROPRIETÁRIO -->
+        <div id="ownerPage" class="hidden flex-grow flex flex-col h-full">
+            <div class="flex border-b border-white/5 px-6 pt-6 gap-8 no-print">
+                <button onclick="showAdminTab('dashboard')" id="btnTabDash" class="pb-4 text-sm font-bold text-cyan-400 border-b-2 border-cyan-400 transition-all">VISÃO GERAL</button>
+                <button onclick="showAdminTab('config')" id="btnTabConfig" class="pb-4 text-sm font-bold text-gray-500 hover:text-white transition-all">CONFIGURAÇÕES</button>
+            </div>
+
+            <!-- DASHBOARD -->
+            <div id="tabDashboard" class="p-6 space-y-6 flex-grow overflow-y-auto">
+                <!-- KPIs (Tela) -->
+                <div class="grid grid-cols-2 gap-4 no-print">
+                    <div class="bg-gradient-to-br from-gray-900 to-black p-5 rounded-2xl border border-white/10">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Hoje (Confirmados)</p>
+                        <h3 id="dashTodayTotal" class="text-3xl font-bold text-white">R$ 0,00</h3>
+                        <p id="dashTodayCount" class="text-xs text-cyan-400 mt-2">0 atendimentos</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-gray-900 to-black p-5 rounded-2xl border border-white/10">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Amanhã (Prev.)</p>
+                        <h3 id="dashTomorrowTotal" class="text-3xl font-bold text-white">R$ 0,00</h3>
+                        <p id="dashTomorrowCount" class="text-xs text-purple-400 mt-2">0 agendamentos</p>
+                    </div>
+                </div>
+
+                <!-- Relatório / Print -->
+                <div class="glass-morphism rounded-xl overflow-hidden border border-white/5">
+                    <div class="p-4 border-b border-white/5 flex justify-between items-center bg-white/5 no-print">
+                        <h3 class="font-bold text-sm text-white flex items-center gap-2"><i class="ph-list-dashes text-cyan-400"></i> Relatório do Dia</h3>
+                        <button onclick="printReport()" class="text-xs bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 px-3 py-2 rounded-lg border border-cyan-500/20 transition-colors flex items-center gap-2">
+                            <i class="ph-printer"></i> Gerar PDF
+                        </button>
+                    </div>
+                    
+                    <!-- Área de Impressão -->
+                    <div id="printableArea" class="p-4">
+                        <!-- Cabeçalho Exclusivo de Impressão -->
+                        <div class="print-header hidden mb-6">
+                            <h1 class="text-2xl font-bold text-center uppercase tracking-widest mb-2" id="printShopName">BARBEARIA</h1>
+                            <p class="text-center text-sm mb-4">Fechamento de Caixa - <span id="printDate"></span></p>
+                            
+                            <!-- Resumo Financeiro no PDF -->
+                            <div class="print-summary-box hidden flex justify-between border border-black p-4 mb-4">
+                                <div class="print-summary-item text-center">
+                                    <div class="print-summary-label">Faturamento Total</div>
+                                    <div class="print-summary-value" id="printTotalMoney">R$ 0,00</div>
+                                </div>
+                                <div class="print-summary-item text-center">
+                                    <div class="print-summary-label">Atendimentos</div>
+                                    <div class="print-summary-value" id="printTotalCount">0</div>
+                                </div>
+                                <div class="print-summary-item text-center">
+                                    <div class="print-summary-label">Cancelamentos</div>
+                                    <div class="print-summary-value text-red-600" id="printCancelCount">0</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-xs text-gray-500 uppercase bg-black/20 print:bg-gray-200 print:text-black">
+                                    <tr>
+                                        <th class="px-4 py-3 print:border print:border-gray-400">Hora</th>
+                                        <th class="px-4 py-3 print:border print:border-gray-400">Cliente</th>
+                                        <th class="px-4 py-3 print:border print:border-gray-400">Serviço</th>
+                                        <th class="px-4 py-3 text-right print:border print:border-gray-400">Status</th>
+                                        <th class="px-4 py-3 text-right print:border print:border-gray-400">Valor</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportTableBody" class="divide-y divide-white/5 text-gray-300 print:divide-gray-400 print:text-black">
+                                    <!-- Linhas geradas via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-white/5 text-right no-print">
+                    <button onclick="resetSystem()" class="text-xs text-red-500 hover:text-red-400 underline decoration-red-500/30 hover:decoration-red-400">Resetar Sistema</button>
+                </div>
+            </div>
+
+            <!-- TAB: CONFIGURAÇÕES -->
+            <div id="tabConfig" class="hidden p-6 space-y-8 flex-grow overflow-y-auto no-print">
+                <!-- Dias da Semana -->
+                <div class="bg-black/20 p-6 rounded-2xl border border-white/5">
+                    <h3 class="text-xs font-bold text-cyan-400 uppercase mb-4 tracking-widest">Dias de Funcionamento</h3>
+                    <div class="flex flex-wrap gap-2" id="weekDaysConfig"></div>
+                </div>
+
+                <!-- Horários -->
+                <div class="bg-black/20 p-6 rounded-2xl border border-white/5">
+                    <h3 class="text-xs font-bold text-cyan-400 uppercase mb-4 tracking-widest">Horários & Almoço</h3>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div><label class="text-[10px] text-gray-500 font-bold mb-1 block">ABERTURA</label><select id="configOpenHour" class="input-cyber w-full p-2 rounded-lg text-sm"></select></div>
+                        <div><label class="text-[10px] text-gray-500 font-bold mb-1 block">FECHAMENTO</label><select id="configCloseHour" class="input-cyber w-full p-2 rounded-lg text-sm"></select></div>
+                        <div><label class="text-[10px] text-gray-500 font-bold mb-1 block">INÍCIO ALMOÇO</label><select id="configLunchStart" class="input-cyber w-full p-2 rounded-lg text-sm"></select></div>
+                        <div><label class="text-[10px] text-gray-500 font-bold mb-1 block">FIM ALMOÇO</label><select id="configLunchEnd" class="input-cyber w-full p-2 rounded-lg text-sm"></select></div>
+                    </div>
+                    <button onclick="saveHoursConfig()" class="w-full py-3 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 font-bold text-xs rounded-xl uppercase tracking-wider">Salvar Horários</button>
+                </div>
+
+                <!-- Identidade -->
+                <div class="bg-black/20 p-6 rounded-2xl border border-white/5">
+                    <h3 class="text-xs font-bold text-cyan-400 uppercase mb-4 tracking-widest">Nome da Barbearia</h3>
+                    <input type="text" id="configBarberName" class="input-cyber w-full p-3 rounded-lg text-sm mb-4">
+                    <button onclick="saveGeneralConfig()" class="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-xs rounded-xl uppercase tracking-wider">Atualizar Nome</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ALERT MODAL -->
+    <div id="alertModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4 fade-in no-print">
+        <div class="bg-[#0a0a0a] border border-cyan-500/30 p-6 rounded-2xl shadow-2xl shadow-cyan-500/10 max-w-xs w-full text-center">
+            <div class="w-12 h-12 bg-cyan-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="ph-info text-cyan-400 text-2xl"></i>
+            </div>
+            <h3 id="alertTitle" class="text-lg font-bold text-white mb-2">Atenção</h3>
+            <p id="alertMessage" class="text-sm text-gray-400 mb-6">Mensagem.</p>
+            <button onclick="closeAlert()" class="w-full py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl">Entendi</button>
+        </div>
+    </div>
+
+    <script>
+        const DEFAULT_CONFIG = { 
+            name: "Barbearia Vanguarda", adminUser: "admin", adminPass: "123",
+            openHour: 8, closeHour: 19, lunchStart: null, lunchEnd: null, workDays: [1,2,3,4,5,6]
+        };
+
+        const DB = {
+            get: (k, d) => JSON.parse(localStorage.getItem(k)) || d,
+            set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
+            cfg: () => DB.get('cyb_cfg', DEFAULT_CONFIG),
+            apps: () => DB.get('cyb_apps', []),
+            blks: () => DB.get('cyb_blks', []),
+            svcs: () => DB.get('cyb_svcs', [{id:1,name:"Corte",price:30},{id:2,name:"Barba",price:25},{id:3,name:"Completo",price:50}])
+        };
+
+        let state = { mode: 'cliente', user: null, selectedTime: null };
+        const money = (v) => v.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+        const getLocalYMD = (d=new Date()) => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().split('T')[0];
+
+        window.onload = () => {
+            const cfg = DB.cfg();
+            document.getElementById('appTitle').innerText = cfg.name.toUpperCase();
+            document.getElementById('configBarberName').value = cfg.name;
+            document.getElementById('printShopName').innerText = cfg.name.toUpperCase();
+            
+            const today = getLocalYMD();
+            document.getElementById('inputDate').min = today;
+            populateConfigUI(); renderServices();
+        };
+
+        function populateConfigUI() {
+            const cfg = DB.cfg();
+            const fill = (id, s, e, sel) => {
+                const el = document.getElementById(id);
+                el.innerHTML = el.innerHTML.includes('Sem') ? '<option value="">Sem almoço</option>' : '';
+                for(let i=s; i<=e; i++) {
+                    let t = i.toString().padStart(2,'0')+":00";
+                    el.add(new Option(t, i, false, i==sel));
+                }
+            };
+            fill('configOpenHour', 6, 22, cfg.openHour);
+            fill('configCloseHour', 7, 23, cfg.closeHour);
+            fill('configLunchStart', parseInt(cfg.openHour), parseInt(cfg.closeHour)-1, cfg.lunchStart);
+            fill('configLunchEnd', parseInt(cfg.openHour)+1, parseInt(cfg.closeHour), cfg.lunchEnd);
+            
+            const daysContainer = document.getElementById('weekDaysConfig');
+            daysContainer.innerHTML = '';
+            ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach((d, idx) => {
+                daysContainer.innerHTML += `
+                    <label class="cursor-pointer relative"><input type="checkbox" class="day-checkbox hidden" value="${idx}" ${cfg.workDays.includes(idx)?'checked':''} onchange="saveWorkDays()">
+                    <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 text-xs text-gray-400 hover:bg-white/10">${d}</div></label>`;
+            });
+        }
+
+        function setLoginMode(m) {
+            state.mode = m;
+            document.getElementById('tabCliente').className = m==='cliente' ? "flex-1 py-2.5 text-xs font-bold uppercase rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-black shadow-lg" : "flex-1 py-2.5 text-xs font-bold uppercase rounded-lg text-gray-500 hover:text-white";
+            document.getElementById('tabOwner').className = m==='owner' ? "flex-1 py-2.5 text-xs font-bold uppercase rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-black shadow-lg" : "flex-1 py-2.5 text-xs font-bold uppercase rounded-lg text-gray-500 hover:text-white";
+            document.getElementById('divLoginPass').classList.toggle('hidden', m==='cliente');
+            document.getElementById('lblLoginUser').innerText = m==='cliente' ? "NOME COMPLETO" : "USUÁRIO ADMIN";
+        }
+
+        function handleLogin() {
+            const u = document.getElementById('loginUser').value.trim();
+            const p = document.getElementById('loginPass').value.trim();
+            if(!u) return showAlert("Erro", "Preencha o nome.");
+            
+            if(state.mode === 'owner') {
+                if(u === DB.cfg().adminUser && p === DB.cfg().adminPass) {
+                    switchPage('ownerPage'); loadDashboard();
+                } else showAlert("Erro", "Dados incorretos.");
+            } else {
+                if(!u.includes(' ') || u.length < 5) return showAlert("Atenção", "Digite Nome e Sobrenome.");
+                state.user = u;
+                document.getElementById('clientNameDisplay').innerText = u.split(' ')[0];
+                switchPage('clientPage'); renderClientApps();
+            }
+        }
+
+        function switchPage(pid) {
+            ['loginPage','clientPage','ownerPage'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById(pid).classList.remove('hidden');
+            const btn = document.getElementById('btnLogout');
+            pid === 'loginPage' ? btn.classList.add('hidden') : btn.classList.remove('hidden');
+        }
+
+        function handleLogout() {
+            document.getElementById('loginUser').value = '';
+            document.getElementById('loginPass').value = '';
+            switchPage('loginPage');
+        }
+
+        function renderServices() {
+            const sel = document.getElementById('inputService');
+            sel.innerHTML = '';
+            DB.svcs().forEach(s => sel.add(new Option(`${s.name} - ${money(s.price)}`, s.id)));
+        }
+
+        function renderTimeSlots() {
+            const date = document.getElementById('inputDate').value;
+            const box = document.getElementById('slotsContainer');
+            box.innerHTML = ''; state.selectedTime = null;
+            if(!date) { box.innerHTML = '<p class="text-gray-500 text-xs col-span-full py-8 text-center bg-white/5 rounded-xl">Selecione uma data.</p>'; return; }
+            
+            const today = getLocalYMD();
+            if(date < today) { box.innerHTML = '<p class="text-red-400 text-xs col-span-full py-4 text-center">Data inválida.</p>'; return; }
+
+            const cfg = DB.cfg();
+            const dateObj = new Date(date + 'T12:00:00');
+            if(!cfg.workDays.includes(dateObj.getDay())) { box.innerHTML = '<p class="text-cyan-500 text-xs col-span-full py-6 text-center font-bold">Fechado neste dia.</p>'; return; }
+
+            const apps = DB.apps();
+            const taken = apps.filter(a => a.date === date && a.status === 'active').map(a => a.time);
+            let has = false;
+
+            for(let i=parseInt(cfg.openHour); i<parseInt(cfg.closeHour); i++) {
+                if(cfg.lunchStart && i >= parseInt(cfg.lunchStart) && i < parseInt(cfg.lunchEnd)) continue;
+                const t = i.toString().padStart(2,'0')+":00";
+                const isPast = (date === today && i <= new Date().getHours());
+                const isTaken = taken.includes(t);
+                
+                const btn = document.createElement('button');
+                btn.innerText = t;
+                if(isTaken || isPast) {
+                    btn.className = "p-3 rounded-xl text-xs font-mono bg-white/5 text-gray-700 cursor-not-allowed";
+                    btn.disabled = true;
+                } else {
+                    has = true;
+                    btn.className = "p-3 rounded-xl text-xs font-mono bg-white/10 text-cyan-400 border border-cyan-900 hover:bg-cyan-500 hover:text-black transition-all shadow-lg";
+                    btn.onclick = () => {
+                        Array.from(box.children).forEach(c => { if(!c.disabled) c.className = "p-3 rounded-xl text-xs font-mono bg-white/10 text-cyan-400 border border-cyan-900 hover:bg-cyan-500 hover:text-black transition-all shadow-lg"; });
+                        btn.className = "p-3 rounded-xl text-xs font-mono bg-gradient-to-r from-cyan-500 to-blue-500 text-black font-bold shadow-cyan-500/50 transform scale-105";
+                        state.selectedTime = t;
+                    }
+                }
+                box.appendChild(btn);
+            }
+            if(!has) box.innerHTML = '<p class="text-gray-500 text-xs col-span-full text-center">Lotado.</p>';
+        }
+
+        function confirmBooking() {
+            if(!state.selectedTime) return showAlert("Atenção", "Selecione um horário.");
+            const sId = document.getElementById('inputService').value;
+            const svc = DB.svcs().find(s => s.id == sId);
+            const date = document.getElementById('inputDate').value;
+            const apps = DB.apps();
+            apps.push({ id: Date.now(), client: state.user, service: svc.name, price: svc.price, date: date, time: state.selectedTime, status: 'active' });
+            DB.set('cyb_apps', apps);
+            
+            // [ALTERAÇÃO] Logout Automático após Sucesso
+            showAlert("Sucesso", "Agendamento confirmado! Redirecionando...", true); 
+            document.getElementById('inputDate').value = ''; renderTimeSlots(); renderClientApps();
+        }
+
+        function renderClientApps() {
+            const list = document.getElementById('clientMyAppointments');
+            list.innerHTML = '';
+            const today = getLocalYMD();
+            const myApps = DB.apps().filter(a => a.client === state.user && a.status === 'active' && a.date >= today).sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
+            document.getElementById('myCount').innerText = myApps.length;
+            if(myApps.length === 0) list.innerHTML = '<p class="text-gray-600 text-xs text-center mt-4">Nenhum.</p>';
+            myApps.forEach(a => {
+                list.innerHTML += `<div class="bg-white/5 p-3 rounded-lg border-l-2 border-cyan-500 flex justify-between items-center mb-2"><div><div class="text-white text-xs font-bold">${a.service}</div><div class="text-gray-500 text-[10px]">${a.date.split('-').reverse().join('/')} às ${a.time}</div></div><button onclick="cancelApp(${a.id})" class="text-red-500 hover:text-red-400"><i class="ph-trash"></i></button></div>`;
+            });
+        }
+
+        function cancelApp(id) {
+            if(!confirm("Cancelar?")) return;
+            let apps = DB.apps();
+            const idx = apps.findIndex(a => a.id === id);
+            if(idx > -1) { apps[idx].status = 'cancelled'; DB.set('cyb_apps', apps); renderClientApps(); if(!document.getElementById('ownerPage').classList.contains('hidden')) loadDashboard(); }
+        }
+
+        function showAdminTab(t) {
+            ['tabDashboard','tabConfig'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            if(t === 'dashboard') { document.getElementById('tabDashboard').classList.remove('hidden'); loadDashboard(); }
+            else document.getElementById('tabConfig').classList.remove('hidden');
+            
+            document.getElementById('btnTabDash').className = t==='dashboard' ? "pb-4 text-sm font-bold text-cyan-400 border-b-2 border-cyan-400 transition-all" : "pb-4 text-sm font-bold text-slate-500 hover:text-white transition-all";
+            document.getElementById('btnTabConfig').className = t==='config' ? "pb-4 text-sm font-bold text-cyan-400 border-b-2 border-cyan-400 transition-all" : "pb-4 text-sm font-bold text-slate-500 hover:text-white transition-all";
+        }
+
+        function loadDashboard() {
+            const apps = DB.apps();
+            const today = getLocalYMD();
+            let tmrw = new Date(); tmrw.setDate(tmrw.getDate() + 1);
+            const tmrwStr = getLocalYMD(tmrw);
+
+            const tApps = apps.filter(a => a.date === today && a.status === 'active');
+            document.getElementById('dashTodayTotal').innerText = money(tApps.reduce((s,a) => s + a.price, 0));
+            document.getElementById('dashTodayCount').innerText = `${tApps.length} atendimentos`;
+
+            const mApps = apps.filter(a => a.date === tmrwStr && a.status === 'active');
+            document.getElementById('dashTomorrowTotal').innerText = money(mApps.reduce((s,a) => s + a.price, 0));
+            document.getElementById('dashTomorrowCount').innerText = `${mApps.length} agendamentos`;
+
+            const tb = document.getElementById('reportTableBody'); tb.innerHTML = '';
+            const allToday = apps.filter(a => a.date === today);
+            let tReal = 0, cAtv = 0, cCan = 0;
+
+            allToday.sort((a,b) => a.time.localeCompare(b.time)).forEach(a => {
+                const isCan = a.status === 'cancelled';
+                if(isCan) cCan++; else { tReal += a.price; cAtv++; }
+                tb.innerHTML += `
+                    <tr class="${isCan ? 'print-cancelled text-slate-600' : 'border-b border-white/5'}">
+                        <td class="px-4 py-3">${a.time}</td><td class="px-4 py-3">${a.client}</td><td class="px-4 py-3 text-cyan-400">${a.service}</td>
+                        <td class="px-4 py-3 text-right">${isCan ? 'CANCELADO' : 'Confirmado'}</td>
+                        <td class="px-4 py-3 text-right text-white">${money(a.price)}</td>
+                    </tr>`;
+            });
+
+            document.getElementById('printDate').innerText = new Date().toLocaleDateString('pt-BR');
+            document.getElementById('printTotalMoney').innerText = money(tReal);
+            document.getElementById('printTotalCount').innerText = cAtv;
+            document.getElementById('printCancelCount').innerText = cCan;
+            document.querySelector('.print-summary-box').classList.remove('hidden');
+        }
+
+        function saveWorkDays() {
+            const days = Array.from(document.querySelectorAll('.day-checkbox:checked')).map(c => parseInt(c.value));
+            const cfg = DB.cfg(); cfg.workDays = days; DB.set('cyb_cfg', cfg);
+        }
+
+        function saveHoursConfig() {
+            const cfg = DB.cfg();
+            cfg.openHour = document.getElementById('configOpenHour').value;
+            cfg.closeHour = document.getElementById('configCloseHour').value;
+            cfg.lunchStart = document.getElementById('configLunchStart').value;
+            cfg.lunchEnd = document.getElementById('configLunchEnd').value;
+            if(parseInt(cfg.openHour) >= parseInt(cfg.closeHour)) return showAlert("Erro", "Horários inválidos.");
+            DB.set('cyb_cfg', cfg); showAlert("Sucesso", "Horários salvos."); populateConfigUI();
+        }
+
+        function saveGeneralConfig() {
+            const n = document.getElementById('configBarberName').value;
+            if(!n) return showAlert("Erro", "Nome inválido.");
+            const cfg = DB.cfg(); cfg.name = n; DB.set('cyb_cfg', cfg);
+            document.getElementById('appTitle').innerText = n.toUpperCase();
+            document.getElementById('printShopName').innerText = n.toUpperCase();
+            showAlert("Sucesso", "Nome atualizado.");
+        }
+
+        function resetSystem() {
+            if(confirm("Apagar TUDO?")) { localStorage.clear(); location.reload(); }
+        }
+
+        function printReport() { window.print(); }
+        
+        function showAlert(t, m, logout = false) {
+            document.getElementById('alertTitle').innerText = t;
+            document.getElementById('alertMessage').innerText = m;
+            document.getElementById('alertModal').classList.remove('hidden');
+            if(logout) setTimeout(() => { closeAlert(); handleLogout(); }, 2000);
+        }
+        
+        function closeAlert() { document.getElementById('alertModal').classList.add('hidden'); }
+        function showForgotPass() { showAlert("Info", "Contate o suporte."); }
+    </script>
+</body>
+</html>
