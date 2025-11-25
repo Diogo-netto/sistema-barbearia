@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Barbearia Premium v11+</title>
+    <title>Barbearia Premium v13</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -91,31 +91,28 @@
         .fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- ESTILO DE IMPRESSÃO (PDF) --- */
+        /* --- IMPRESSÃO --- */
         @media print {
-            body * { visibility: hidden; }
-            #printableArea, #printableArea * { visibility: visible; }
-            #printableArea { 
-                position: absolute; left: 0; top: 0; width: 100%; 
-                background: white; color: black; padding: 20px; 
-                z-index: 9999;
+            * { visibility: hidden !important; }
+            #printableArea, #printableArea * { 
+                visibility: visible !important; 
+                color: #000 !important; 
+                background: #fff !important; 
+                box-shadow: none !important;
             }
+            #printableArea { 
+                position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px; 
+            }
+            body { background: #fff !important; }
             .no-print { display: none !important; }
             
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            th { background-color: #eee !important; color: #000 !important; border: 1px solid #aaa; padding: 8px; font-size: 12px; }
-            td { border: 1px solid #aaa; padding: 8px; font-size: 12px; color: #000 !important; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th { background: #f0f0f0 !important; border: 1px solid #000; padding: 8px; font-size: 12px; }
+            td { border: 1px solid #000; padding: 8px; font-size: 12px; }
             
-            .print-cancelled { text-decoration: line-through; color: #999 !important; font-style: italic; }
-            .print-cancelled-tag { font-weight: bold; color: red !important; text-decoration: none; font-size: 10px; margin-left: 5px; }
-            
-            .print-summary-box {
-                display: flex; justify-content: space-between; 
-                border: 1px solid #000; padding: 10px; margin-bottom: 20px;
-            }
-            .print-summary-item { text-align: center; }
-            .print-summary-label { font-size: 10px; text-transform: uppercase; }
-            .print-summary-value { font-size: 16px; font-weight: bold; }
+            .print-cancelled { text-decoration: line-through; font-style: italic; }
+            .print-summary-box { display: flex !important; justify-content: space-between; border: 1px solid #000; padding: 10px; margin-bottom: 20px; }
+            .print-header { display: block !important; text-align: center; margin-bottom: 20px; }
         }
     </style>
 </head>
@@ -158,9 +155,18 @@
                 </div>
                 <div id="divLoginPass" class="hidden">
                     <label class="block text-[10px] font-bold text-cyan-400 mb-2 uppercase tracking-widest ml-1">Senha</label>
-                    <input type="password" id="loginPass" class="input-cyber w-full p-3 pl-4 rounded-xl text-sm" placeholder="••••••">
-                    <div class="text-right mt-2">
-                        <button onclick="showForgotPass()" class="text-[10px] text-gray-500 hover:text-cyan-400">Recuperar acesso</button>
+                    <div class="relative">
+                        <input type="password" id="loginPass" class="input-cyber w-full p-3 pl-4 pr-10 rounded-xl text-sm" placeholder="••••••">
+                        <!-- Botão Olho -->
+                        <button onclick="togglePasswordVisibility()" class="absolute right-3 top-3 text-gray-500 hover:text-cyan-400 focus:outline-none">
+                            <i id="eyeIcon" class="ph-eye-slash text-lg"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Links de Ação -->
+                    <div class="flex justify-between items-center mt-3">
+                        <button onclick="showRegisterModal()" class="text-[10px] text-cyan-400 hover:text-white border-b border-cyan-400/30 pb-0.5">Quero me Cadastrar</button>
+                        <button onclick="showForgotPass()" class="text-[10px] text-gray-500 hover:text-gray-300">Recuperar senha</button>
                     </div>
                 </div>
                 <button onclick="handleLogin()" class="btn-neon w-full py-3.5 rounded-xl shadow-lg shadow-cyan-500/20 mt-4 text-sm">
@@ -171,12 +177,12 @@
 
         <!-- 2. ÁREA DO CLIENTE -->
         <div id="clientPage" class="hidden flex-grow flex flex-col md:flex-row h-full no-print">
+            <!-- Conteúdo igual à v11 -->
             <div class="p-6 md:p-8 md:w-2/3 space-y-8 overflow-y-auto">
                 <div>
                     <h2 class="text-2xl font-bold text-white mb-1">Agendar Horário</h2>
                     <p class="text-sm text-gray-400">Olá, <span id="clientNameDisplay" class="text-cyan-400 font-bold">Cliente</span>.</p>
                 </div>
-
                 <div class="space-y-6">
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider ml-1">Serviço</label>
@@ -189,18 +195,14 @@
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider ml-1">Disponibilidade</label>
                         <div id="slotsContainer" class="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                            <p class="text-gray-600 text-xs col-span-full py-8 text-center border border-dashed border-white/10 rounded-xl bg-black/20">
-                                Selecione uma data para ver os horários.
-                            </p>
+                            <p class="text-gray-600 text-xs col-span-full py-8 text-center border border-dashed border-white/10 rounded-xl bg-black/20">Selecione uma data.</p>
                         </div>
                     </div>
                 </div>
-
                 <button onclick="confirmBooking()" class="btn-neon w-full py-4 rounded-xl shadow-lg shadow-cyan-500/20 flex justify-center items-center gap-2 text-sm">
                     CONFIRMAR AGENDAMENTO <i class="ph-check-circle text-lg"></i>
                 </button>
             </div>
-
             <div class="bg-black/20 border-t md:border-t-0 md:border-l border-white/5 p-6 md:w-1/3 flex flex-col">
                 <div class="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Meus Agendamentos</h3>
@@ -219,10 +221,9 @@
 
             <!-- DASHBOARD -->
             <div id="tabDashboard" class="p-6 space-y-6 flex-grow overflow-y-auto">
-                <!-- KPIs (Tela) -->
                 <div class="grid grid-cols-2 gap-4 no-print">
                     <div class="bg-gradient-to-br from-gray-900 to-black p-5 rounded-2xl border border-white/10">
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Hoje (Confirmados)</p>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Hoje (Realizado)</p>
                         <h3 id="dashTodayTotal" class="text-3xl font-bold text-white">R$ 0,00</h3>
                         <p id="dashTodayCount" class="text-xs text-cyan-400 mt-2">0 atendimentos</p>
                     </div>
@@ -233,35 +234,32 @@
                     </div>
                 </div>
 
-                <!-- Relatório / Print -->
+                <!-- Relatório -->
                 <div class="glass-morphism rounded-xl overflow-hidden border border-white/5">
                     <div class="p-4 border-b border-white/5 flex justify-between items-center bg-white/5 no-print">
                         <h3 class="font-bold text-sm text-white flex items-center gap-2"><i class="ph-list-dashes text-cyan-400"></i> Relatório do Dia</h3>
                         <button onclick="printReport()" class="text-xs bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 px-3 py-2 rounded-lg border border-cyan-500/20 transition-colors flex items-center gap-2">
-                            <i class="ph-printer"></i> Gerar PDF
+                            <i class="ph-printer"></i> Imprimir PDF
                         </button>
                     </div>
                     
-                    <!-- Área de Impressão -->
                     <div id="printableArea" class="p-4">
-                        <!-- Cabeçalho Exclusivo de Impressão -->
+                        <!-- Cabeçalho Impressão -->
                         <div class="print-header hidden mb-6">
                             <h1 class="text-2xl font-bold text-center uppercase tracking-widest mb-2" id="printShopName">BARBEARIA</h1>
                             <p class="text-center text-sm mb-4">Fechamento de Caixa - <span id="printDate"></span></p>
-                            
-                            <!-- Resumo Financeiro no PDF -->
-                            <div class="print-summary-box hidden flex justify-between border border-black p-4 mb-4">
-                                <div class="print-summary-item text-center">
-                                    <div class="print-summary-label">Faturamento Total</div>
-                                    <div class="print-summary-value" id="printTotalMoney">R$ 0,00</div>
+                            <div class="print-summary-box hidden">
+                                <div class="text-center">
+                                    <div class="text-[10px] uppercase">Faturamento</div>
+                                    <div class="text-lg font-bold" id="printTotalMoney">R$ 0,00</div>
                                 </div>
-                                <div class="print-summary-item text-center">
-                                    <div class="print-summary-label">Atendimentos</div>
-                                    <div class="print-summary-value" id="printTotalCount">0</div>
+                                <div class="text-center">
+                                    <div class="text-[10px] uppercase">Atendimentos</div>
+                                    <div class="text-lg font-bold" id="printTotalCount">0</div>
                                 </div>
-                                <div class="print-summary-item text-center">
-                                    <div class="print-summary-label">Cancelamentos</div>
-                                    <div class="print-summary-value text-red-600" id="printCancelCount">0</div>
+                                <div class="text-center">
+                                    <div class="text-[10px] uppercase">Cancelados</div>
+                                    <div class="text-lg font-bold text-red-600" id="printCancelCount">0</div>
                                 </div>
                             </div>
                         </div>
@@ -277,9 +275,7 @@
                                         <th class="px-4 py-3 text-right print:border print:border-gray-400">Valor</th>
                                     </tr>
                                 </thead>
-                                <tbody id="reportTableBody" class="divide-y divide-white/5 text-gray-300 print:divide-gray-400 print:text-black">
-                                    <!-- Linhas geradas via JS -->
-                                </tbody>
+                                <tbody id="reportTableBody" class="divide-y divide-white/5 text-gray-300 print:divide-gray-400 print:text-black"></tbody>
                             </table>
                         </div>
                     </div>
@@ -290,15 +286,12 @@
                 </div>
             </div>
 
-            <!-- TAB: CONFIGURAÇÕES -->
+            <!-- TAB CONFIG -->
             <div id="tabConfig" class="hidden p-6 space-y-8 flex-grow overflow-y-auto no-print">
-                <!-- Dias da Semana -->
                 <div class="bg-black/20 p-6 rounded-2xl border border-white/5">
                     <h3 class="text-xs font-bold text-cyan-400 uppercase mb-4 tracking-widest">Dias de Funcionamento</h3>
                     <div class="flex flex-wrap gap-2" id="weekDaysConfig"></div>
                 </div>
-
-                <!-- Horários -->
                 <div class="bg-black/20 p-6 rounded-2xl border border-white/5">
                     <h3 class="text-xs font-bold text-cyan-400 uppercase mb-4 tracking-widest">Horários & Almoço</h3>
                     <div class="grid grid-cols-2 gap-4 mb-4">
@@ -309,8 +302,6 @@
                     </div>
                     <button onclick="saveHoursConfig()" class="w-full py-3 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 font-bold text-xs rounded-xl uppercase tracking-wider">Salvar Horários</button>
                 </div>
-
-                <!-- Identidade -->
                 <div class="bg-black/20 p-6 rounded-2xl border border-white/5">
                     <h3 class="text-xs font-bold text-cyan-400 uppercase mb-4 tracking-widest">Nome da Barbearia</h3>
                     <input type="text" id="configBarberName" class="input-cyber w-full p-3 rounded-lg text-sm mb-4">
@@ -332,6 +323,28 @@
         </div>
     </div>
 
+    <!-- REGISTER MODAL (NOVO) -->
+    <div id="registerModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4 fade-in no-print">
+        <div class="bg-[#0a0a0a] border border-purple-500/30 p-6 rounded-2xl shadow-2xl max-w-sm w-full">
+            <h3 class="text-xl font-bold text-white mb-1 text-center">Configurar Sistema</h3>
+            <p class="text-xs text-gray-400 mb-6 text-center">Crie seu acesso de proprietário</p>
+            
+            <div class="space-y-4">
+                
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">Usuário Admin</label>
+                    <input type="text" id="regUser" class="input-cyber w-full p-3 rounded-lg text-sm" placeholder="Ex: admin">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">Senha Admin</label>
+                    <input type="password" id="regPass" class="input-cyber w-full p-3 rounded-lg text-sm" placeholder="******">
+                </div>
+                <button onclick="finishRegistration()" class="w-full py-3 bg-gradient-to-r from-purple-600 to-cyan-600 text-white font-bold rounded-xl mt-2">SALVAR E ENTRAR</button>
+                <button onclick="closeRegisterModal()" class="w-full py-2 text-gray-500 hover:text-white text-xs">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const DEFAULT_CONFIG = { 
             name: "Barbearia Vanguarda", adminUser: "admin", adminPass: "123",
@@ -343,7 +356,6 @@
             set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
             cfg: () => DB.get('cyb_cfg', DEFAULT_CONFIG),
             apps: () => DB.get('cyb_apps', []),
-            blks: () => DB.get('cyb_blks', []),
             svcs: () => DB.get('cyb_svcs', [{id:1,name:"Corte",price:30},{id:2,name:"Barba",price:25},{id:3,name:"Completo",price:50}])
         };
 
@@ -356,11 +368,49 @@
             document.getElementById('appTitle').innerText = cfg.name.toUpperCase();
             document.getElementById('configBarberName').value = cfg.name;
             document.getElementById('printShopName').innerText = cfg.name.toUpperCase();
-            
-            const today = getLocalYMD();
-            document.getElementById('inputDate').min = today;
+            document.getElementById('inputDate').min = getLocalYMD();
             populateConfigUI(); renderServices();
         };
+
+        function togglePasswordVisibility() {
+            const input = document.getElementById('loginPass');
+            const icon = document.getElementById('eyeIcon');
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.replace('ph-eye-slash', 'ph-eye');
+            } else {
+                input.type = "password";
+                icon.classList.replace('ph-eye', 'ph-eye-slash');
+            }
+        }
+
+        function showRegisterModal() {
+            document.getElementById('registerModal').classList.remove('hidden');
+        }
+        function closeRegisterModal() {
+            document.getElementById('registerModal').classList.add('hidden');
+        }
+
+        function finishRegistration() {
+            const name = document.getElementById('regBarberName').value.trim();
+            const user = document.getElementById('regUser').value.trim();
+            const pass = document.getElementById('regPass').value.trim();
+
+            if(!name || !user || !pass) return alert("Preencha todos os campos.");
+
+            const cfg = DB.cfg();
+            cfg.name = name;
+            cfg.adminUser = user;
+            cfg.adminPass = pass;
+            DB.set('cyb_cfg', cfg);
+
+            document.getElementById('appTitle').innerText = name.toUpperCase();
+            document.getElementById('configBarberName').value = name;
+            document.getElementById('printShopName').innerText = name.toUpperCase();
+            
+            closeRegisterModal();
+            showAlert("Sucesso", "Configuração salva! Use seus novos dados para entrar.");
+        }
 
         function populateConfigUI() {
             const cfg = DB.cfg();
@@ -388,10 +438,23 @@
 
         function setLoginMode(m) {
             state.mode = m;
-            document.getElementById('tabCliente').className = m==='cliente' ? "flex-1 py-2.5 text-xs font-bold uppercase rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-black shadow-lg" : "flex-1 py-2.5 text-xs font-bold uppercase rounded-lg text-gray-500 hover:text-white";
-            document.getElementById('tabOwner').className = m==='owner' ? "flex-1 py-2.5 text-xs font-bold uppercase rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-black shadow-lg" : "flex-1 py-2.5 text-xs font-bold uppercase rounded-lg text-gray-500 hover:text-white";
-            document.getElementById('divLoginPass').classList.toggle('hidden', m==='cliente');
-            document.getElementById('lblLoginUser').innerText = m==='cliente' ? "NOME COMPLETO" : "USUÁRIO ADMIN";
+            const c = document.getElementById('tabCliente'), o = document.getElementById('tabOwner');
+            const divP = document.getElementById('divLoginPass');
+            const lbl = document.getElementById('lblLoginUser');
+            const inp = document.getElementById('loginUser');
+
+            c.className = m==='cliente' ? "flex-1 py-2.5 text-xs font-bold uppercase rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-black shadow-lg" : "flex-1 py-2.5 text-xs font-bold uppercase rounded-lg text-gray-500 hover:text-white";
+            o.className = m==='owner' ? "flex-1 py-2.5 text-xs font-bold uppercase rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-black shadow-lg" : "flex-1 py-2.5 text-xs font-bold uppercase rounded-lg text-gray-500 hover:text-white";
+            
+            if(m === 'cliente') {
+                divP.classList.add('hidden');
+                lbl.innerText = "NOME COMPLETO";
+                inp.placeholder = "Ex: Carlos Almeida";
+            } else {
+                divP.classList.remove('hidden');
+                lbl.innerText = "USUÁRIO ADMIN";
+                inp.placeholder = "Ex: admin";
+            }
         }
 
         function handleLogin() {
@@ -480,9 +543,7 @@
             const apps = DB.apps();
             apps.push({ id: Date.now(), client: state.user, service: svc.name, price: svc.price, date: date, time: state.selectedTime, status: 'active' });
             DB.set('cyb_apps', apps);
-            
-            // [ALTERAÇÃO] Logout Automático após Sucesso
-            showAlert("Sucesso", "Agendamento confirmado! Redirecionando...", true); 
+            showAlert("Sucesso", "Agendamento confirmado! Saindo...", true); 
             document.getElementById('inputDate').value = ''; renderTimeSlots(); renderClientApps();
         }
 
@@ -531,14 +592,34 @@
             const tb = document.getElementById('reportTableBody'); tb.innerHTML = '';
             const allToday = apps.filter(a => a.date === today);
             let tReal = 0, cAtv = 0, cCan = 0;
+            
+            // STATUS AUTOMÁTICO "REALIZADO" (Verde)
+            const now = new Date();
+            const currentH = now.getHours();
 
             allToday.sort((a,b) => a.time.localeCompare(b.time)).forEach(a => {
                 const isCan = a.status === 'cancelled';
-                if(isCan) cCan++; else { tReal += a.price; cAtv++; }
+                let statusTxt = 'Confirmado';
+                let statusCls = 'text-cyan-400';
+                let rowCls = 'border-b border-white/5';
+                
+                const appH = parseInt(a.time.split(':')[0]);
+
+                if(isCan) {
+                    cCan++; statusTxt = 'CANCELADO'; statusCls = 'text-red-500 font-bold'; rowCls += ' print-cancelled text-slate-600';
+                } else {
+                    tReal += a.price; cAtv++;
+                    // Se não cancelado e hora já passou = Realizado
+                    if (appH < currentH) {
+                        statusTxt = 'REALIZADO';
+                        statusCls = 'text-green-500 font-bold';
+                    }
+                }
+
                 tb.innerHTML += `
-                    <tr class="${isCan ? 'print-cancelled text-slate-600' : 'border-b border-white/5'}">
+                    <tr class="${rowCls}">
                         <td class="px-4 py-3">${a.time}</td><td class="px-4 py-3">${a.client}</td><td class="px-4 py-3 text-cyan-400">${a.service}</td>
-                        <td class="px-4 py-3 text-right">${isCan ? 'CANCELADO' : 'Confirmado'}</td>
+                        <td class="px-4 py-3 text-right ${statusCls}">${statusTxt}</td>
                         <td class="px-4 py-3 text-right text-white">${money(a.price)}</td>
                     </tr>`;
             });
@@ -547,6 +628,7 @@
             document.getElementById('printTotalMoney').innerText = money(tReal);
             document.getElementById('printTotalCount').innerText = cAtv;
             document.getElementById('printCancelCount').innerText = cCan;
+            
             document.querySelector('.print-summary-box').classList.remove('hidden');
         }
 
@@ -578,7 +660,16 @@
             if(confirm("Apagar TUDO?")) { localStorage.clear(); location.reload(); }
         }
 
-        function printReport() { window.print(); }
+        function printReport() { 
+            loadDashboard();
+            document.querySelector('.print-header').classList.remove('hidden');
+            document.querySelector('.print-summary-box').classList.remove('hidden');
+            setTimeout(() => {
+                window.print();
+                document.querySelector('.print-header').classList.add('hidden');
+                document.querySelector('.print-summary-box').classList.add('hidden');
+            }, 500);
+        }
         
         function showAlert(t, m, logout = false) {
             document.getElementById('alertTitle').innerText = t;
