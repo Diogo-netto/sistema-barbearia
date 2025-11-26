@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Barbearia Premium v13</title>
+    <title>Barbearia Premium v15</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -91,33 +91,61 @@
         .fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- IMPRESSÃO --- */
+        /* --- CSS DE IMPRESSÃO BLINDADO --- */
         @media print {
-            * { visibility: hidden !important; }
-            #printableArea, #printableArea * { 
-                visibility: visible !important; 
-                color: #000 !important; 
-                background: #fff !important; 
+            /* 1. Reset Total */
+            body, html { 
+                background-color: white !important; 
+                background-image: none !important;
+                height: 100%; 
+                margin: 0; padding: 0; 
+                overflow: visible !important;
+            }
+
+            /* 2. Esconde TUDO que não é a área de impressão */
+            body > *:not(#printableContainer) {
+                display: none !important;
+            }
+
+            /* 3. Configura a área de impressão */
+            #printableContainer {
+                display: block !important;
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 20px !important;
+                background: white !important;
+                color: black !important;
+                z-index: 99999;
+            }
+
+            /* 4. Força cores para preto e branco */
+            #printableContainer * {
+                color: black !important;
+                background: transparent !important;
                 box-shadow: none !important;
+                border-color: #ccc !important;
             }
-            #printableArea { 
-                position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px; 
-            }
-            body { background: #fff !important; }
-            .no-print { display: none !important; }
-            
+
+            /* 5. Estilos específicos da tabela no papel */
             table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th { background: #f0f0f0 !important; border: 1px solid #000; padding: 8px; font-size: 12px; }
-            td { border: 1px solid #000; padding: 8px; font-size: 12px; }
+            th { background-color: #f0f0f0 !important; font-weight: bold; border: 1px solid #000 !important; padding: 8px; font-size: 12px; }
+            td { border: 1px solid #000 !important; padding: 8px; font-size: 12px; }
             
-            .print-cancelled { text-decoration: line-through; font-style: italic; }
-            .print-summary-box { display: flex !important; justify-content: space-between; border: 1px solid #000; padding: 10px; margin-bottom: 20px; }
             .print-header { display: block !important; text-align: center; margin-bottom: 20px; }
+            .print-summary-box { display: flex !important; justify-content: space-between; border: 2px solid #000 !important; padding: 15px; margin-bottom: 20px; }
+            .print-cancelled { text-decoration: line-through; font-style: italic; }
+            
+            /* Esconde elementos de UI dentro do relatório se houver */
+            .no-print { display: none !important; }
         }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center p-4">
 
+    <!-- Container Principal do App -->
     <div id="app" class="w-full max-w-md md:max-w-5xl glass-morphism rounded-2xl overflow-hidden fade-in min-h-[700px] flex flex-col relative border-t border-t-white/10">
         
         <!-- Topo -->
@@ -157,7 +185,7 @@
                     <label class="block text-[10px] font-bold text-cyan-400 mb-2 uppercase tracking-widest ml-1">Senha</label>
                     <div class="relative">
                         <input type="password" id="loginPass" class="input-cyber w-full p-3 pl-4 pr-10 rounded-xl text-sm" placeholder="••••••">
-                        <!-- Botão Olho -->
+                        <!-- Olhinho de Senha -->
                         <button onclick="togglePasswordVisibility()" class="absolute right-3 top-3 text-gray-500 hover:text-cyan-400 focus:outline-none">
                             <i id="eyeIcon" class="ph-eye-slash text-lg"></i>
                         </button>
@@ -165,8 +193,8 @@
                     
                     <!-- Links de Ação -->
                     <div class="flex justify-between items-center mt-3">
-                        <button onclick="showRegisterModal()" class="text-[10px] text-cyan-400 hover:text-white border-b border-cyan-400/30 pb-0.5">Quero me Cadastrar</button>
-                        <button onclick="showForgotPass()" class="text-[10px] text-gray-500 hover:text-gray-300">Recuperar senha</button>
+                        <button onclick="showRegisterModal()" class="text-[12px] font-bold text-cyan-400 hover:text-white border-b border-cyan-400/30 pb-0.5">Faça seu Cadastro</button>
+                        <button onclick="showForgotPass()" class="text-[12px] text-gray-500 hover:text-gray-300">Recuperar senha</button>
                     </div>
                 </div>
                 <button onclick="handleLogin()" class="btn-neon w-full py-3.5 rounded-xl shadow-lg shadow-cyan-500/20 mt-4 text-sm">
@@ -177,12 +205,12 @@
 
         <!-- 2. ÁREA DO CLIENTE -->
         <div id="clientPage" class="hidden flex-grow flex flex-col md:flex-row h-full no-print">
-            <!-- Conteúdo igual à v11 -->
             <div class="p-6 md:p-8 md:w-2/3 space-y-8 overflow-y-auto">
                 <div>
                     <h2 class="text-2xl font-bold text-white mb-1">Agendar Horário</h2>
                     <p class="text-sm text-gray-400">Olá, <span id="clientNameDisplay" class="text-cyan-400 font-bold">Cliente</span>.</p>
                 </div>
+
                 <div class="space-y-6">
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider ml-1">Serviço</label>
@@ -195,14 +223,18 @@
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider ml-1">Disponibilidade</label>
                         <div id="slotsContainer" class="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                            <p class="text-gray-600 text-xs col-span-full py-8 text-center border border-dashed border-white/10 rounded-xl bg-black/20">Selecione uma data.</p>
+                            <p class="text-gray-600 text-xs col-span-full py-8 text-center border border-dashed border-white/10 rounded-xl bg-black/20">
+                                Selecione uma data para ver os horários.
+                            </p>
                         </div>
                     </div>
                 </div>
+
                 <button onclick="confirmBooking()" class="btn-neon w-full py-4 rounded-xl shadow-lg shadow-cyan-500/20 flex justify-center items-center gap-2 text-sm">
                     CONFIRMAR AGENDAMENTO <i class="ph-check-circle text-lg"></i>
                 </button>
             </div>
+
             <div class="bg-black/20 border-t md:border-t-0 md:border-l border-white/5 p-6 md:w-1/3 flex flex-col">
                 <div class="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Meus Agendamentos</h3>
@@ -221,6 +253,7 @@
 
             <!-- DASHBOARD -->
             <div id="tabDashboard" class="p-6 space-y-6 flex-grow overflow-y-auto">
+                <!-- Cards -->
                 <div class="grid grid-cols-2 gap-4 no-print">
                     <div class="bg-gradient-to-br from-gray-900 to-black p-5 rounded-2xl border border-white/10">
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Hoje (Realizado)</p>
@@ -234,48 +267,28 @@
                     </div>
                 </div>
 
-                <!-- Relatório -->
-                <div class="glass-morphism rounded-xl overflow-hidden border border-white/5">
-                    <div class="p-4 border-b border-white/5 flex justify-between items-center bg-white/5 no-print">
+                <!-- Card de Relatório (Interface) -->
+                <div class="glass-morphism rounded-xl overflow-hidden border border-white/5 no-print">
+                    <div class="p-4 border-b border-white/5 flex justify-between items-center bg-white/5">
                         <h3 class="font-bold text-sm text-white flex items-center gap-2"><i class="ph-list-dashes text-cyan-400"></i> Relatório do Dia</h3>
                         <button onclick="printReport()" class="text-xs bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 px-3 py-2 rounded-lg border border-cyan-500/20 transition-colors flex items-center gap-2">
                             <i class="ph-printer"></i> Imprimir PDF
                         </button>
                     </div>
-                    
-                    <div id="printableArea" class="p-4">
-                        <!-- Cabeçalho Impressão -->
-                        <div class="print-header hidden mb-6">
-                            <h1 class="text-2xl font-bold text-center uppercase tracking-widest mb-2" id="printShopName">BARBEARIA</h1>
-                            <p class="text-center text-sm mb-4">Fechamento de Caixa - <span id="printDate"></span></p>
-                            <div class="print-summary-box hidden">
-                                <div class="text-center">
-                                    <div class="text-[10px] uppercase">Faturamento</div>
-                                    <div class="text-lg font-bold" id="printTotalMoney">R$ 0,00</div>
-                                </div>
-                                <div class="text-center">
-                                    <div class="text-[10px] uppercase">Atendimentos</div>
-                                    <div class="text-lg font-bold" id="printTotalCount">0</div>
-                                </div>
-                                <div class="text-center">
-                                    <div class="text-[10px] uppercase">Cancelados</div>
-                                    <div class="text-lg font-bold text-red-600" id="printCancelCount">0</div>
-                                </div>
-                            </div>
-                        </div>
-                        
+                    <div class="p-4">
                         <div class="overflow-x-auto">
+                            <!-- Tabela Visualização Tela -->
                             <table class="w-full text-sm text-left">
-                                <thead class="text-xs text-gray-500 uppercase bg-black/20 print:bg-gray-200 print:text-black">
+                                <thead class="text-xs text-gray-500 uppercase bg-black/20">
                                     <tr>
-                                        <th class="px-4 py-3 print:border print:border-gray-400">Hora</th>
-                                        <th class="px-4 py-3 print:border print:border-gray-400">Cliente</th>
-                                        <th class="px-4 py-3 print:border print:border-gray-400">Serviço</th>
-                                        <th class="px-4 py-3 text-right print:border print:border-gray-400">Status</th>
-                                        <th class="px-4 py-3 text-right print:border print:border-gray-400">Valor</th>
+                                        <th class="px-4 py-3">Hora</th>
+                                        <th class="px-4 py-3">Cliente</th>
+                                        <th class="px-4 py-3">Serviço</th>
+                                        <th class="px-4 py-3 text-right">Status</th>
+                                        <th class="px-4 py-3 text-right">Valor</th>
                                     </tr>
                                 </thead>
-                                <tbody id="reportTableBody" class="divide-y divide-white/5 text-gray-300 print:divide-gray-400 print:text-black"></tbody>
+                                <tbody id="screenReportTableBody" class="divide-y divide-white/5 text-gray-300"></tbody>
                             </table>
                         </div>
                     </div>
@@ -286,12 +299,14 @@
                 </div>
             </div>
 
-            <!-- TAB CONFIG -->
+            <!-- TAB CONFIGURAÇÕES -->
             <div id="tabConfig" class="hidden p-6 space-y-8 flex-grow overflow-y-auto no-print">
+                <!-- Dias da Semana -->
                 <div class="bg-black/20 p-6 rounded-2xl border border-white/5">
                     <h3 class="text-xs font-bold text-cyan-400 uppercase mb-4 tracking-widest">Dias de Funcionamento</h3>
                     <div class="flex flex-wrap gap-2" id="weekDaysConfig"></div>
                 </div>
+                <!-- Horários -->
                 <div class="bg-black/20 p-6 rounded-2xl border border-white/5">
                     <h3 class="text-xs font-bold text-cyan-400 uppercase mb-4 tracking-widest">Horários & Almoço</h3>
                     <div class="grid grid-cols-2 gap-4 mb-4">
@@ -302,6 +317,7 @@
                     </div>
                     <button onclick="saveHoursConfig()" class="w-full py-3 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 font-bold text-xs rounded-xl uppercase tracking-wider">Salvar Horários</button>
                 </div>
+                <!-- Identidade -->
                 <div class="bg-black/20 p-6 rounded-2xl border border-white/5">
                     <h3 class="text-xs font-bold text-cyan-400 uppercase mb-4 tracking-widest">Nome da Barbearia</h3>
                     <input type="text" id="configBarberName" class="input-cyber w-full p-3 rounded-lg text-sm mb-4">
@@ -309,6 +325,46 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- ÁREA OCULTA DE IMPRESSÃO (SOLUÇÃO FINAL DO PDF) -->
+    <!-- ===================================================== -->
+    <div id="printableContainer" class="hidden">
+        <div class="print-header">
+            <h1 class="text-2xl font-bold text-center uppercase tracking-widest mb-2" id="printShopName">BARBEARIA</h1>
+            <p class="text-center text-sm mb-4">Relatório Diário de Caixa - <span id="printDate"></span></p>
+            
+            <!-- Resumo Financeiro -->
+            <div class="print-summary-box">
+                <div class="text-center">
+                    <div class="text-[10px] uppercase">Faturamento</div>
+                    <div class="text-lg font-bold" id="printTotalMoney">R$ 0,00</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-[10px] uppercase">Atendimentos</div>
+                    <div class="text-lg font-bold" id="printTotalCount">0</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-[10px] uppercase">Cancelados</div>
+                    <div class="text-lg font-bold text-red-600" id="printCancelCount">0</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabela de Impressão -->
+        <table class="w-full text-sm text-left">
+            <thead class="text-xs uppercase bg-gray-200">
+                <tr>
+                    <th class="px-4 py-3">Hora</th>
+                    <th class="px-4 py-3">Cliente</th>
+                    <th class="px-4 py-3">Serviço</th>
+                    <th class="px-4 py-3 text-right">Status</th>
+                    <th class="px-4 py-3 text-right">Valor</th>
+                </tr>
+            </thead>
+            <tbody id="printReportTableBody"></tbody>
+        </table>
     </div>
 
     <!-- ALERT MODAL -->
@@ -323,22 +379,15 @@
         </div>
     </div>
 
-    <!-- REGISTER MODAL (NOVO) -->
+    <!-- REGISTER MODAL -->
     <div id="registerModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4 fade-in no-print">
         <div class="bg-[#0a0a0a] border border-purple-500/30 p-6 rounded-2xl shadow-2xl max-w-sm w-full">
-            <h3 class="text-xl font-bold text-white mb-1 text-center">Configurar Sistema</h3>
-            <p class="text-xs text-gray-400 mb-6 text-center">Crie seu acesso de proprietário</p>
-            
+            <h3 class="text-xl font-bold text-white mb-1 text-center">Faça seu Cadastro</h3>
+            <p class="text-xs text-gray-400 mb-6 text-center">Configure o acesso do proprietário</p>
             <div class="space-y-4">
-                
-                <div>
-                    <label class="text-[10px] font-bold text-gray-500 uppercase">Usuário Admin</label>
-                    <input type="text" id="regUser" class="input-cyber w-full p-3 rounded-lg text-sm" placeholder="Ex: admin">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-500 uppercase">Senha Admin</label>
-                    <input type="password" id="regPass" class="input-cyber w-full p-3 rounded-lg text-sm" placeholder="******">
-                </div>
+        
+                <div><label class="text-[10px] font-bold text-gray-500 uppercase">Usuário Admin</label><input type="text" id="regUser" class="input-cyber w-full p-3 rounded-lg text-sm"></div>
+                <div><label class="text-[10px] font-bold text-gray-500 uppercase">Senha Admin</label><input type="password" id="regPass" class="input-cyber w-full p-3 rounded-lg text-sm"></div>
                 <button onclick="finishRegistration()" class="w-full py-3 bg-gradient-to-r from-purple-600 to-cyan-600 text-white font-bold rounded-xl mt-2">SALVAR E ENTRAR</button>
                 <button onclick="closeRegisterModal()" class="w-full py-2 text-gray-500 hover:text-white text-xs">Cancelar</button>
             </div>
@@ -356,7 +405,12 @@
             set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
             cfg: () => DB.get('cyb_cfg', DEFAULT_CONFIG),
             apps: () => DB.get('cyb_apps', []),
-            svcs: () => DB.get('cyb_svcs', [{id:1,name:"Corte",price:30},{id:2,name:"Barba",price:25},{id:3,name:"Completo",price:50}])
+            svcs: () => DB.get('cyb_svcs', [
+                {id:1,name:"Corte Clássico",price:30},
+                {id:2,name:"Barba Desenhada",price:25},
+                {id:3,name:"Completo (Corte + Barba)",price:50},
+                {id:4,name:"Progressiva",price:80},
+            ])
         };
 
         let state = { mode: 'cliente', user: null, selectedTime: null };
@@ -384,92 +438,55 @@
             }
         }
 
-        function showRegisterModal() {
-            document.getElementById('registerModal').classList.remove('hidden');
-        }
-        function closeRegisterModal() {
-            document.getElementById('registerModal').classList.add('hidden');
-        }
+        function showRegisterModal() { document.getElementById('registerModal').classList.remove('hidden'); }
+        function closeRegisterModal() { document.getElementById('registerModal').classList.add('hidden'); }
 
         function finishRegistration() {
             const name = document.getElementById('regBarberName').value.trim();
             const user = document.getElementById('regUser').value.trim();
             const pass = document.getElementById('regPass').value.trim();
-
-            if(!name || !user || !pass) return alert("Preencha todos os campos.");
-
-            const cfg = DB.cfg();
-            cfg.name = name;
-            cfg.adminUser = user;
-            cfg.adminPass = pass;
-            DB.set('cyb_cfg', cfg);
-
+            if(!name || !user || !pass) return showAlert("Erro", "Preencha tudo.");
+            const cfg = DB.cfg(); cfg.name = name; cfg.adminUser = user; cfg.adminPass = pass; DB.set('cyb_cfg', cfg);
             document.getElementById('appTitle').innerText = name.toUpperCase();
-            document.getElementById('configBarberName').value = name;
             document.getElementById('printShopName').innerText = name.toUpperCase();
-            
-            closeRegisterModal();
-            showAlert("Sucesso", "Configuração salva! Use seus novos dados para entrar.");
+            closeRegisterModal(); showAlert("Sucesso", "Conta criada! Entre agora.");
         }
 
         function populateConfigUI() {
             const cfg = DB.cfg();
             const fill = (id, s, e, sel) => {
                 const el = document.getElementById(id);
-                el.innerHTML = el.innerHTML.includes('Sem') ? '<option value="">Sem almoço</option>' : '';
-                for(let i=s; i<=e; i++) {
-                    let t = i.toString().padStart(2,'0')+":00";
-                    el.add(new Option(t, i, false, i==sel));
-                }
+                el.innerHTML = id.includes('Lunch') ? '<option value="">Sem almoço</option>' : '';
+                for(let i=s; i<=e; i++) el.add(new Option(i.toString().padStart(2,'0')+":00", i, false, i==sel));
             };
             fill('configOpenHour', 6, 22, cfg.openHour);
             fill('configCloseHour', 7, 23, cfg.closeHour);
             fill('configLunchStart', parseInt(cfg.openHour), parseInt(cfg.closeHour)-1, cfg.lunchStart);
             fill('configLunchEnd', parseInt(cfg.openHour)+1, parseInt(cfg.closeHour), cfg.lunchEnd);
             
-            const daysContainer = document.getElementById('weekDaysConfig');
-            daysContainer.innerHTML = '';
-            ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach((d, idx) => {
-                daysContainer.innerHTML += `
-                    <label class="cursor-pointer relative"><input type="checkbox" class="day-checkbox hidden" value="${idx}" ${cfg.workDays.includes(idx)?'checked':''} onchange="saveWorkDays()">
-                    <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 text-xs text-gray-400 hover:bg-white/10">${d}</div></label>`;
+            const box = document.getElementById('weekDaysConfig'); box.innerHTML = '';
+            ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach((d,i) => {
+                box.innerHTML += `<label class="cursor-pointer relative"><input type="checkbox" class="day-checkbox hidden" value="${i}" ${cfg.workDays.includes(i)?'checked':''} onchange="saveWorkDays()"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 text-xs text-gray-400 hover:bg-white/10">${d}</div></label>`;
             });
         }
 
         function setLoginMode(m) {
             state.mode = m;
-            const c = document.getElementById('tabCliente'), o = document.getElementById('tabOwner');
-            const divP = document.getElementById('divLoginPass');
-            const lbl = document.getElementById('lblLoginUser');
-            const inp = document.getElementById('loginUser');
-
-            c.className = m==='cliente' ? "flex-1 py-2.5 text-xs font-bold uppercase rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-black shadow-lg" : "flex-1 py-2.5 text-xs font-bold uppercase rounded-lg text-gray-500 hover:text-white";
-            o.className = m==='owner' ? "flex-1 py-2.5 text-xs font-bold uppercase rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-black shadow-lg" : "flex-1 py-2.5 text-xs font-bold uppercase rounded-lg text-gray-500 hover:text-white";
-            
-            if(m === 'cliente') {
-                divP.classList.add('hidden');
-                lbl.innerText = "NOME COMPLETO";
-                inp.placeholder = "Ex: Carlos Almeida";
-            } else {
-                divP.classList.remove('hidden');
-                lbl.innerText = "USUÁRIO ADMIN";
-                inp.placeholder = "Ex: admin";
-            }
+            document.getElementById('tabCliente').className = m==='cliente' ? "flex-1 py-2.5 text-xs font-bold uppercase rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-black shadow-lg" : "flex-1 py-2.5 text-xs font-bold uppercase rounded-lg text-gray-500 hover:text-white";
+            document.getElementById('tabOwner').className = m==='owner' ? "flex-1 py-2.5 text-xs font-bold uppercase rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-black shadow-lg" : "flex-1 py-2.5 text-xs font-bold uppercase rounded-lg text-gray-500 hover:text-white";
+            document.getElementById('divLoginPass').classList.toggle('hidden', m==='cliente');
+            document.getElementById('lblLoginUser').innerText = m==='cliente' ? "NOME COMPLETO" : "USUÁRIO ADMIN";
         }
 
         function handleLogin() {
             const u = document.getElementById('loginUser').value.trim();
             const p = document.getElementById('loginPass').value.trim();
             if(!u) return showAlert("Erro", "Preencha o nome.");
-            
             if(state.mode === 'owner') {
-                if(u === DB.cfg().adminUser && p === DB.cfg().adminPass) {
-                    switchPage('ownerPage'); loadDashboard();
-                } else showAlert("Erro", "Dados incorretos.");
+                if(u === DB.cfg().adminUser && p === DB.cfg().adminPass) { switchPage('ownerPage'); loadDashboard(); } else showAlert("Erro", "Dados incorretos.");
             } else {
                 if(!u.includes(' ') || u.length < 5) return showAlert("Atenção", "Digite Nome e Sobrenome.");
-                state.user = u;
-                document.getElementById('clientNameDisplay').innerText = u.split(' ')[0];
+                state.user = u; document.getElementById('clientNameDisplay').innerText = u.split(' ')[0];
                 switchPage('clientPage'); renderClientApps();
             }
         }
@@ -482,14 +499,12 @@
         }
 
         function handleLogout() {
-            document.getElementById('loginUser').value = '';
-            document.getElementById('loginPass').value = '';
+            document.getElementById('loginUser').value = ''; document.getElementById('loginPass').value = '';
             switchPage('loginPage');
         }
 
         function renderServices() {
-            const sel = document.getElementById('inputService');
-            sel.innerHTML = '';
+            const sel = document.getElementById('inputService'); sel.innerHTML = '';
             DB.svcs().forEach(s => sel.add(new Option(`${s.name} - ${money(s.price)}`, s.id)));
         }
 
@@ -503,24 +518,20 @@
             if(date < today) { box.innerHTML = '<p class="text-red-400 text-xs col-span-full py-4 text-center">Data inválida.</p>'; return; }
 
             const cfg = DB.cfg();
-            const dateObj = new Date(date + 'T12:00:00');
-            if(!cfg.workDays.includes(dateObj.getDay())) { box.innerHTML = '<p class="text-cyan-500 text-xs col-span-full py-6 text-center font-bold">Fechado neste dia.</p>'; return; }
+            if(!cfg.workDays.includes(new Date(date+'T12:00:00').getDay())) { box.innerHTML = '<p class="text-cyan-500 text-xs col-span-full py-6 text-center font-bold">Fechado neste dia.</p>'; return; }
 
-            const apps = DB.apps();
-            const taken = apps.filter(a => a.date === date && a.status === 'active').map(a => a.time);
+            const taken = DB.apps().filter(a => a.date === date && a.status === 'active').map(a => a.time);
             let has = false;
 
             for(let i=parseInt(cfg.openHour); i<parseInt(cfg.closeHour); i++) {
-                if(cfg.lunchStart && i >= parseInt(cfg.lunchStart) && i < parseInt(cfg.lunchEnd)) continue;
+                if(cfg.lunchStart && cfg.lunchEnd && i >= parseInt(cfg.lunchStart) && i < parseInt(cfg.lunchEnd)) continue;
                 const t = i.toString().padStart(2,'0')+":00";
                 const isPast = (date === today && i <= new Date().getHours());
                 const isTaken = taken.includes(t);
                 
-                const btn = document.createElement('button');
-                btn.innerText = t;
+                const btn = document.createElement('button'); btn.innerText = t;
                 if(isTaken || isPast) {
-                    btn.className = "p-3 rounded-xl text-xs font-mono bg-white/5 text-gray-700 cursor-not-allowed";
-                    btn.disabled = true;
+                    btn.className = "p-3 rounded-xl text-xs font-mono bg-white/5 text-gray-700 cursor-not-allowed"; btn.disabled = true;
                 } else {
                     has = true;
                     btn.className = "p-3 rounded-xl text-xs font-mono bg-white/10 text-cyan-400 border border-cyan-900 hover:bg-cyan-500 hover:text-black transition-all shadow-lg";
@@ -537,21 +548,18 @@
 
         function confirmBooking() {
             if(!state.selectedTime) return showAlert("Atenção", "Selecione um horário.");
-            const sId = document.getElementById('inputService').value;
-            const svc = DB.svcs().find(s => s.id == sId);
+            const svc = DB.svcs().find(s => s.id == document.getElementById('inputService').value);
             const date = document.getElementById('inputDate').value;
             const apps = DB.apps();
             apps.push({ id: Date.now(), client: state.user, service: svc.name, price: svc.price, date: date, time: state.selectedTime, status: 'active' });
             DB.set('cyb_apps', apps);
-            showAlert("Sucesso", "Agendamento confirmado! Saindo...", true); 
+            showAlert("Sucesso", "Agendamento confirmado! Saindo...", true);
             document.getElementById('inputDate').value = ''; renderTimeSlots(); renderClientApps();
         }
 
         function renderClientApps() {
-            const list = document.getElementById('clientMyAppointments');
-            list.innerHTML = '';
-            const today = getLocalYMD();
-            const myApps = DB.apps().filter(a => a.client === state.user && a.status === 'active' && a.date >= today).sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
+            const list = document.getElementById('clientMyAppointments'); list.innerHTML = '';
+            const myApps = DB.apps().filter(a => a.client === state.user && a.status === 'active' && a.date >= getLocalYMD()).sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
             document.getElementById('myCount').innerText = myApps.length;
             if(myApps.length === 0) list.innerHTML = '<p class="text-gray-600 text-xs text-center mt-4">Nenhum.</p>';
             myApps.forEach(a => {
@@ -560,10 +568,11 @@
         }
 
         function cancelApp(id) {
-            if(!confirm("Cancelar?")) return;
-            let apps = DB.apps();
-            const idx = apps.findIndex(a => a.id === id);
-            if(idx > -1) { apps[idx].status = 'cancelled'; DB.set('cyb_apps', apps); renderClientApps(); if(!document.getElementById('ownerPage').classList.contains('hidden')) loadDashboard(); }
+            const doCancel = () => {
+                let apps = DB.apps(); const idx = apps.findIndex(a => a.id === id);
+                if(idx > -1) { apps[idx].status = 'cancelled'; DB.set('cyb_apps', apps); renderClientApps(); if(!document.getElementById('ownerPage').classList.contains('hidden')) loadDashboard(); }
+            };
+            showAlert("Confirmação", "Deseja cancelar este agendamento?", false, true, doCancel);
         }
 
         function showAdminTab(t) {
@@ -589,47 +598,59 @@
             document.getElementById('dashTomorrowTotal').innerText = money(mApps.reduce((s,a) => s + a.price, 0));
             document.getElementById('dashTomorrowCount').innerText = `${mApps.length} agendamentos`;
 
-            const tb = document.getElementById('reportTableBody'); tb.innerHTML = '';
+            // PREPARAÇÃO DOS DADOS PARA TABELA (TELA E IMPRESSÃO)
             const allToday = apps.filter(a => a.date === today);
             let tReal = 0, cAtv = 0, cCan = 0;
             
-            // STATUS AUTOMÁTICO "REALIZADO" (Verde)
-            const now = new Date();
-            const currentH = now.getHours();
+            // Prepara as strings HTML
+            let screenRows = '';
+            let printRows = '';
+            const nowH = new Date().getHours();
 
             allToday.sort((a,b) => a.time.localeCompare(b.time)).forEach(a => {
                 const isCan = a.status === 'cancelled';
-                let statusTxt = 'Confirmado';
-                let statusCls = 'text-cyan-400';
-                let rowCls = 'border-b border-white/5';
-                
                 const appH = parseInt(a.time.split(':')[0]);
-
-                if(isCan) {
-                    cCan++; statusTxt = 'CANCELADO'; statusCls = 'text-red-500 font-bold'; rowCls += ' print-cancelled text-slate-600';
-                } else {
-                    tReal += a.price; cAtv++;
-                    // Se não cancelado e hora já passou = Realizado
-                    if (appH < currentH) {
-                        statusTxt = 'REALIZADO';
-                        statusCls = 'text-green-500 font-bold';
-                    }
+                let stTxt = 'Confirmado', stCls = 'text-cyan-400';
+                
+                if(isCan) { cCan++; stTxt = 'CANCELADO'; stCls = 'text-red-500 font-bold'; } 
+                else {
+                    if (appH <= nowH) { stTxt = 'REALIZADO'; stCls = 'text-green-500 font-bold'; tReal += a.price; cAtv++; }
+                    else { tReal += a.price; cAtv++; }
                 }
 
-                tb.innerHTML += `
-                    <tr class="${rowCls}">
-                        <td class="px-4 py-3">${a.time}</td><td class="px-4 py-3">${a.client}</td><td class="px-4 py-3 text-cyan-400">${a.service}</td>
-                        <td class="px-4 py-3 text-right ${statusCls}">${statusTxt}</td>
-                        <td class="px-4 py-3 text-right text-white">${money(a.price)}</td>
-                    </tr>`;
+                const rowCommon = `<td class="px-4 py-3">${a.time}</td><td class="px-4 py-3">${a.client}</td><td class="px-4 py-3">${a.service}</td>`;
+                
+                // Tabela da Tela (Cyber Style)
+                screenRows += `<tr class="border-b border-white/5 ${isCan ? 'text-gray-500 line-through' : ''}">
+                    <td class="px-4 py-3 text-white">${a.time}</td>
+                    <td class="px-4 py-3 text-white">${a.client}</td>
+                    <td class="px-4 py-3 text-cyan-400">${a.service}</td>
+                    <td class="px-4 py-3 text-right ${stCls}">${stTxt}</td>
+                    <td class="px-4 py-3 text-right text-white font-bold">${money(a.price)}</td>
+                </tr>`;
+
+                // Tabela de Impressão (Clean Style)
+                printRows += `<tr>
+                    ${rowCommon}
+                    <td class="px-4 py-3 text-right">${stTxt}</td>
+                    <td class="px-4 py-3 text-right">${money(a.price)}</td>
+                </tr>`;
             });
 
+            // Injeta nas tabelas
+            document.getElementById('screenReportTableBody').innerHTML = screenRows;
+            document.getElementById('printReportTableBody').innerHTML = printRows;
+
+            // Atualiza cabeçalho de impressão
             document.getElementById('printDate').innerText = new Date().toLocaleDateString('pt-BR');
             document.getElementById('printTotalMoney').innerText = money(tReal);
             document.getElementById('printTotalCount').innerText = cAtv;
             document.getElementById('printCancelCount').innerText = cCan;
-            
-            document.querySelector('.print-summary-box').classList.remove('hidden');
+        }
+
+        function printReport() { 
+            loadDashboard();
+            setTimeout(() => { window.print(); }, 300);
         }
 
         function saveWorkDays() {
@@ -657,25 +678,40 @@
         }
 
         function resetSystem() {
-            if(confirm("Apagar TUDO?")) { localStorage.clear(); location.reload(); }
+            const doReset = () => { localStorage.clear(); location.reload(); };
+            showAlert("CUIDADO", "Isso apagará TODOS os dados. Continuar?", false, true, doReset);
         }
 
-        function printReport() { 
-            loadDashboard();
-            document.querySelector('.print-header').classList.remove('hidden');
-            document.querySelector('.print-summary-box').classList.remove('hidden');
-            setTimeout(() => {
-                window.print();
-                document.querySelector('.print-header').classList.add('hidden');
-                document.querySelector('.print-summary-box').classList.add('hidden');
-            }, 500);
-        }
-        
-        function showAlert(t, m, logout = false) {
+        function showAlert(t, m, logout = false, isConfirm = false, onConfirm = null) {
             document.getElementById('alertTitle').innerText = t;
             document.getElementById('alertMessage').innerText = m;
             document.getElementById('alertModal').classList.remove('hidden');
-            if(logout) setTimeout(() => { closeAlert(); handleLogout(); }, 2000);
+            
+            const btnArea = document.querySelector('#alertModal button').parentNode;
+            // Limpa botões antigos para evitar duplicação
+            btnArea.innerHTML = `<h3 id="alertTitle" class="text-lg font-bold text-white mb-2">${t}</h3><p id="alertMessage" class="text-sm text-gray-400 mb-6">${m}</p>`;
+
+            if(isConfirm) {
+                const btnYes = document.createElement('button');
+                btnYes.className = "w-full py-2 mb-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl";
+                btnYes.innerText = "SIM, CONFIRMAR";
+                btnYes.onclick = () => { closeAlert(); if(onConfirm) onConfirm(); };
+                
+                const btnNo = document.createElement('button');
+                btnNo.className = "w-full py-2 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl";
+                btnNo.innerText = "CANCELAR";
+                btnNo.onclick = closeAlert;
+                
+                btnArea.appendChild(btnYes);
+                btnArea.appendChild(btnNo);
+            } else {
+                const btnOk = document.createElement('button');
+                btnOk.className = "w-full py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl";
+                btnOk.innerText = "ENTENDI";
+                btnOk.onclick = closeAlert;
+                btnArea.appendChild(btnOk);
+                if(logout) setTimeout(() => { closeAlert(); handleLogout(); }, 2000);
+            }
         }
         
         function closeAlert() { document.getElementById('alertModal').classList.add('hidden'); }
