@@ -323,6 +323,33 @@
                     <input type="text" id="configBarberName" class="input-cyber w-full p-3 rounded-lg text-sm mb-4">
                     <button onclick="saveGeneralConfig()" class="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-xs rounded-xl uppercase tracking-wider">Atualizar Nome</button>
                 </div>
+
+                <!-- Bloqueios de Horário -->
+<div class="bg-black/20 p-6 rounded-2xl border border-white/5 mt-4">
+  <h3 class="text-xs font-bold text-cyan-400 uppercase mb-4 tracking-widest">
+    Bloqueios de Horário
+  </h3>
+
+  <div class="grid grid-cols-2 gap-4 mb-4">
+    <div>
+      <label class="text-[10px] text-gray-500 font-bold mb-1 block">INÍCIO</label>
+      <select id="blockStart" class="input-cyber w-full p-2 rounded-lg text-sm"></select>
+    </div>
+    <div>
+      <label class="text-[10px] text-gray-500 font-bold mb-1 block">FIM</label>
+      <select id="blockEnd" class="input-cyber w-full p-2 rounded-lg text-sm"></select>
+    </div>
+  </div>
+
+  <button onclick="addBlockedInterval()" class="w-full py-3 border border-red-500/40 text-red-400 hover:bg-red-500/10 font-bold text-xs rounded-xl uppercase tracking-wider mb-4">
+    Adicionar Bloqueio
+  </button>
+
+  <div id="blockedList" class="space-y-2 text-xs text-gray-300 max-h-40 overflow-y-auto">
+    <!-- aqui aparece a lista de horários bloqueados -->
+  </div>
+</div>
+
             </div>
         </div>
     </div>
@@ -397,7 +424,7 @@
     <script>
         const DEFAULT_CONFIG = { 
             name: "Barbearia Vanguarda", adminUser: "admin", adminPass: "123",
-            openHour: 8, closeHour: 19, lunchStart: null, lunchEnd: null, workDays: [1,2,3,4,5,6]
+            openHour: 8, closeHour: 19, lunchStart: null, lunchEnd: null, workDays: [1,2,3,4,5,6],  blocked: [] // [{start: "11:00", end: "13:00", note: "Médico"}]
         };
 
         const DB = {
@@ -454,23 +481,85 @@
             closeRegisterModal(); showAlert("Sucesso", "Conta criada! Entre agora.");
         }
 
-        function populateConfigUI() {
-            const cfg = DB.cfg();
-            const fill = (id, s, e, sel) => {
-                const el = document.getElementById(id);
-                el.innerHTML = id.includes('Lunch') ? '<option value="">Sem almoço</option>' : '';
-                for(let i=s; i<=e; i++) el.add(new Option(i.toString().padStart(2,'0')+":00", i, false, i==sel));
-            };
-            fill('configOpenHour', 6, 22, cfg.openHour);
-            fill('configCloseHour', 7, 23, cfg.closeHour);
-            fill('configLunchStart', parseInt(cfg.openHour), parseInt(cfg.closeHour)-1, cfg.lunchStart);
-            fill('configLunchEnd', parseInt(cfg.openHour)+1, parseInt(cfg.closeHour), cfg.lunchEnd);
-            
-            const box = document.getElementById('weekDaysConfig'); box.innerHTML = '';
-            ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach((d,i) => {
-                box.innerHTML += `<label class="cursor-pointer relative"><input type="checkbox" class="day-checkbox hidden" value="${i}" ${cfg.workDays.includes(i)?'checked':''} onchange="saveWorkDays()"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 text-xs text-gray-400 hover:bg-white/10">${d}</div></label>`;
-            });
-        }
+
+        function populateBlockedUI() {
+  const cfg = DB.cfg();
+
+  const fill = (id, s, e) => {
+    const el = document.getElementById(id);
+    el.innerHTML = '<option value="">Selecione</option>';
+    for (let i = s; i <= e; i++) {
+      const v = i.toString().padStart(2,'0') + ":00";
+      el.add(new Option(v, v));
+    }
+  };
+
+  fill('blockStart', parseInt(cfg.openHour), parseInt(cfg.closeHour) - 1);
+  fill('blockEnd', parseInt(cfg.openHour) + 1, parseInt(cfg.closeHour));
+
+  const list = document.getElementById('blockedList');
+  list.innerHTML = '';
+  (cfg.blocked || []).forEach((b, idx) => {
+    const div = document.createElement('div');
+    div.className = "flex items-center justify-between bg-white/5 border border-white/10 rounded-lg px-3 py-2";
+    div.innerHTML = `
+      <span class="text-xs text-gray-200">
+        ${b.start} às ${b.end}
+      </span>
+      <button class="text-red-400 text-xs" onclick="removeBlockedInterval(${idx})">
+        Remover
+      </button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+
+       function populateConfigUI() {     
+  const cfg = DB.cfg();
+
+  const fill = (id, s, e, sel) => {
+    const el = document.getElementById(id);
+    el.innerHTML = id.includes('Lunch')
+      ? '<option value="">Sem almoço</option>'
+      : '';
+    for (let i = s; i <= e; i++) {
+      el.add(
+        new Option(
+          i.toString().padStart(2, '0') + ":00",
+          i,
+          false,
+          i == sel
+        )
+      );
+    }
+  };
+
+  fill('configOpenHour', 6, 22, cfg.openHour);
+  fill('configCloseHour', 7, 23, cfg.closeHour);
+  fill('configLunchStart', parseInt(cfg.openHour), parseInt(cfg.closeHour) - 1, cfg.lunchStart);
+  fill('configLunchEnd', parseInt(cfg.openHour) + 1, parseInt(cfg.closeHour), cfg.lunchEnd);
+
+  const box = document.getElementById('weekDaysConfig');
+  box.innerHTML = '';
+  ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach((d,i) => {
+    box.innerHTML += `
+      <label class="cursor-pointer relative">
+        <input type="checkbox"
+               class="day-checkbox hidden"
+               value="${i}"
+               ${cfg.workDays.includes(i) ? 'checked' : ''}
+               onchange="saveWorkDays()">
+        <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 text-xs text-gray-400 hover:bg-white/10">
+          ${d}
+        </div>
+      </label>`;
+  });
+
+  // NOVO: atualiza selects e lista de bloqueios
+  populateBlockedUI();
+}
+
 
         function setLoginMode(m) {
             state.mode = m;
