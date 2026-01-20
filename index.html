@@ -763,32 +763,50 @@
             document.getElementById(id).innerText = money(end);
         }
 
-        function renderDashboardTable(apps, today) {
-            const tbody = document.getElementById('screenReportTableBody');
-            const dayApps = apps.filter(a => a.date === today).sort((a,b) => a.time.localeCompare(b.time));
-            
-            if(dayApps.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-500 italic">Nenhum registro para hoje.</td></tr>';
-                return;
-            }
+       function renderDashboardTable(apps, today) {
+    const tbody = document.getElementById('screenReportTableBody');
+    const dayApps = apps.filter(a => a.date === today).sort((a,b) => a.time.localeCompare(b.time));
+    
+    if(dayApps.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-500 italic">Nenhum registro para hoje.</td></tr>';
+        return;
+    }
 
-            let html = '';
-            dayApps.forEach(a => {
-                const isCan = a.status === 'cancelled';
-                let stBadge = `<span class="px-2 py-1 rounded bg-green-500/10 text-green-400 text-[10px] font-bold uppercase">Confirmado</span>`;
-                if(isCan) stBadge = `<span class="px-2 py-1 rounded bg-red-500/10 text-red-500 text-[10px] font-bold uppercase">Cancelado</span>`;
-                
-                html += `
-                <tr class="border-b border-white/5 hover:bg-white/5 transition-colors ${isCan ? 'opacity-40' : ''}">
-                    <td class="px-5 py-4 text-white font-mono text-xs">${a.time}</td>
-                    <td class="px-5 py-4 text-white font-bold">${a.client}</td>
-                    <td class="px-5 py-4 text-cyan-400">${a.service}</td>
-                    <td class="px-5 py-4 text-right">${stBadge}</td>
-                    <td class="px-5 py-4 text-right text-white font-bold font-mono">${money(a.price)}</td>
-                </tr>`;
-            });
-            tbody.innerHTML = html;
+    // Pega a hora atual em minutos para comparar
+    const agora = new Date();
+    const minAgora = agora.getHours() * 60 + agora.getMinutes();
+
+    let html = '';
+    dayApps.forEach(a => {
+        const isCan = a.status === 'cancelled';
+        
+        // Converte a hora do agendamento (ex: "14:30") em minutos totais
+        const [h, m] = a.time.split(':').map(Number);
+        const minApp = h * 60 + m;
+
+        let stBadge = '';
+        if (isCan) {
+            // Cancelado: Vermelho
+            stBadge = `<span class="px-2 py-1 rounded bg-red-500/10 text-red-500 text-[10px] font-bold uppercase">Cancelado</span>`;
+        } else if (minApp < minAgora) {
+            // Se o horário já passou: Verde Concluído
+            stBadge = `<span class="px-2 py-1 rounded bg-green-500/10 text-green-400 text-[10px] font-bold uppercase">Concluído</span>`;
+        } else {
+            // Se o horário ainda vai chegar: Amarelo Confirmado
+            stBadge = `<span class="px-2 py-1 rounded bg-yellow-500/10 text-yellow-500 text-[10px] font-bold uppercase">Confirmado</span>`;
         }
+        
+        html += `
+        <tr class="border-b border-white/5 hover:bg-white/5 transition-colors ${isCan ? 'opacity-40' : ''}">
+            <td class="px-5 py-4 text-white font-mono text-xs">${a.time}</td>
+            <td class="px-5 py-4 text-white font-bold">${a.client}</td>
+            <td class="px-5 py-4 text-cyan-400">${a.service}</td>
+            <td class="px-5 py-4 text-right">${stBadge}</td>
+            <td class="px-5 py-4 text-right text-white font-bold font-mono">${money(a.price)}</td>
+        </tr>`;
+    });
+    tbody.innerHTML = html;
+}
 
         function renderNextClients(todayActiveApps) {
             const list = document.getElementById('nextClientsList');
